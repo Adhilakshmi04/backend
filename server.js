@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js"; 
 import facultyRoutes from "./routes/facultyRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
+import batchRoutes from "./routes/batchRoutes.js";
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -14,6 +15,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/batches",batchRoutes)
+app.use("/api/students",batchRoutes);
 
 const PORT = process.env.PORT || 5000;
 
