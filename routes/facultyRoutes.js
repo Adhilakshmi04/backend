@@ -13,6 +13,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import Assignment from "../models/Assignment.js";
 import { request } from "http";
+import Student from "../models/Student.js";
 dotenv.config();
 
 
@@ -488,6 +489,42 @@ router.delete("/delete-assignment/:courseId/:assignmentId", async (req, res) => 
       message: "Error deleting assignment",
       error: error.message,
     });
+  }
+});
+
+router.delete('/course/:courseId/remove-student/:studentId', async (req, res) => {
+  const { courseId, studentId } = req.params;
+
+  try {
+    // Check if courseId is valid
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ success: false, message: 'Invalid course ID format' });
+    }
+
+    // Check if studentId is valid
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid student ID format' });
+    }
+
+    // Find the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    // Check if the student is in the course
+    if (!course.students.includes(studentId)) {
+      return res.status(400).json({ success: false, message: 'Student not enrolled in this course' });
+    }
+
+    // Remove the student from the course
+    course.students = course.students.filter(id => id.toString() !== studentId);
+    await course.save();
+
+    return res.status(200).json({ success: true, message: 'Student removed from course successfully' });
+  } catch (error) {
+    console.error('Error removing student from course:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 
