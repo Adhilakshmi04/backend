@@ -1,10 +1,16 @@
-import Message from '../models/Message.js';
+import Chat from '../models/Chat.js';
 
 export const saveMessage = async (req, res) => {
   const { messages } = req.body;
   const userId = req.user.id;
   try {
-    await Message.insertMany(messages.map(msg => ({ ...msg, userId })));
+    let chat = await Chat.findOne({ userId });
+    if (!chat) {
+      chat = new Chat({ userId, messages });
+    } else {
+      chat.messages.push(...messages);
+    }
+    await chat.save();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error saving messages', error });
@@ -14,8 +20,11 @@ export const saveMessage = async (req, res) => {
 export const getChatHistory = async (req, res) => {
   const userId = req.user.id;
   try {
-    const messages = await Message.find({ userId }).sort({ timestamp: 1 });
-    res.json({ success: true, messages });
+    const chat = await Chat.findOne({ userId }).select('messages');
+    if (!chat) {
+      return res.json({ success: true, messages: [] });
+    }
+    res.json({ success: true, messages: chat.messages });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching chat history', error });
   }
@@ -24,7 +33,12 @@ export const getChatHistory = async (req, res) => {
 export const clearChatHistory = async (req, res) => {
   const userId = req.user.id;
   try {
-    await Message.deleteMany({ userId });
+    const chat = await Chat.findOne({ userId });
+    if (!chat) {
+      return res.json({ success: true });
+    }
+    chat.messages = [];
+    await chat.save();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error clearing chat history', error });
